@@ -1,0 +1,47 @@
+{
+    "name": "dogedev/laravelapidocumenter",
+    "description": ":description",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Marko Maletic",
+            "email": "marko@dogedev.com",
+            "homepage": "www.dogedev.com"
+        },
+        {
+            "name": "Mihailo Pantovic",
+            "email": "pantovic.mihailo@gmail.com",
+        }
+    ],
+    "homepage": "https://github.com/dogedev/laravelapidocumenter",
+    "keywords": ["Laravel", "LaravelAPIDocumenter"],
+    "require": {
+        "illuminate/support": "~5"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "~7.0",
+        "mockery/mockery": "^1.1",
+        "orchestra/testbench": "~3.0",
+        "sempro/phpunit-pretty-print": "^1.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "DogeDev\\LaravelAPIDocumenter\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "DogeDev\\LaravelAPIDocumenter\\Tests\\": "tests"
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "DogeDev\\LaravelAPIDocumenter\\LaravelAPIDocumenterServiceProvider"
+            ],
+            "aliases": {
+                "LaravelAPIDocumenter": "DogeDev\\LaravelAPIDocumenter\\Facades\\LaravelAPIDocumenter"
+            }
+        }
+    }
+}
