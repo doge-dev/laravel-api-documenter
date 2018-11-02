@@ -1,20 +1,19 @@
 {
-    "name": "dogedev/laravelapidocumenter",
+    "name": "dogedev/laravel-api-documenter",
     "description": ":description",
     "license": "MIT",
     "authors": [
         {
             "name": "Marko Maletic",
-            "email": "marko@dogedev.com",
-            "homepage": "www.dogedev.com"
+            "email": "marko@dogedev.com"
         },
         {
             "name": "Mihailo Pantovic",
-            "email": "pantovic.mihailo@gmail.com",
+            "email": "pantovic.mihailo@gmail.com"
         }
     ],
-    "homepage": "https://github.com/dogedev/laravelapidocumenter",
-    "keywords": ["Laravel", "LaravelAPIDocumenter"],
+    "homepage": "https://github.com/dogedev/laravel-api-documenter",
+    "keywords": ["Laravel", "API", "Documenter", "Documentation"],
     "require": {
         "illuminate/support": "~5"
     },
