@@ -17,6 +17,7 @@ class LaravelAPIDocumenterServiceProvider extends ServiceProvider
         // Publishing the configuration file.
         $this->publishes([
             __DIR__.'/../resources/views' => resource_path('views/vendor/laravel-api-documenter'),
+            __DIR__.'/../resources/lang' => resource_path('lang/vendor/laravel-api-documenter'),
         ], 'laravel-api-documenter.config');
 
         $this->loadTranslationsFrom(__DIR__ . '/../resources/lang', 'laravel-api-documenter');
