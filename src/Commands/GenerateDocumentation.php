@@ -18,6 +18,8 @@ class GenerateDocumentation extends Command
     {--show-warnings : Outputs Warnings }
     {--middleware= : Filter out the routes by middleware(s) (comma delimited) }
     {--prefix= : Filter out the routes by prefix(es) (comma delimited) }
+    {--descriptions= : Language file from which to read the validation descriptions (defaults to laravel-api-documenter::validation) }
+    {--view= : View file to use for rendering the HTML (defaults to laravel-api-documenter::index) }
     {--export-path= : Export an HTML to path }
     {--render-table : Render table in the console. }';
 
@@ -57,6 +59,16 @@ class GenerateDocumentation extends Command
             $documenter->setPrefix(explode(',', $this->option('prefix')));
         }
 
+        if ($this->option('descriptions')) {
+
+            $documenter->setDescriptions($this->option('descriptions'));
+        }
+
+        if ($this->option('view')) {
+
+            $documenter->setView($this->option('view'));
+        }
+
         $results = $documenter->getRoutes();
 
         if ($this->option('show-warnings')) {
@@ -82,8 +94,14 @@ class GenerateDocumentation extends Command
 
         if ($this->option('export-path')) {
 
-            file_put_contents($this->option('export-path'), view('sample', ['name' => 'Code Chewing'])->render());
+            $parameters = ['routes' => $documenter->getRoutes()];
+
+            $html = view($documenter->getView(), $parameters)->render();
+
+            file_put_contents($this->option('export-path'), $html);
         }
+
+        return null;
     }
 
     /**
@@ -101,7 +119,7 @@ class GenerateDocumentation extends Command
 
                 foreach ($rule->validations as $validation) {
 
-                    $string .= $rule->attribute . ":" .$validation->text . "\n";
+                    $string .= $rule->attribute . ":" . $validation->text . "\n";
                 }
             }
 
@@ -109,7 +127,7 @@ class GenerateDocumentation extends Command
                 implode(" ", $row->methods->all() ?: []) . "\n" . $row->uri,
                 $row->class . "@" . $row->function,
                 implode("\n", $row->middleware->all() ?: []),
-                $string ."\n\n",
+                $string . "\n\n",
             ];
         });
 

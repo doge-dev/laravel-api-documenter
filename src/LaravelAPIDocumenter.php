@@ -11,22 +11,31 @@ class LaravelAPIDocumenter
 {
     protected $middleware;
     protected $prefix;
+    protected $descriptions;
+    protected $view;
     protected $errors;
     protected $warnings;
     protected $info;
 
     /**
      * LaravelAPIDocumenter constructor.
-     * @param array $middleware
-     * @param array $prefix
+     * @param array  $middleware
+     * @param array  $prefix
+     * @param string $descriptions
+     * @param string $view
      */
-    public function __construct(array $middleware = [], array $prefix = [])
-    {
+    public function __construct(
+        array $middleware = [],
+        array $prefix = [],
+        $descriptions = 'laravel-api-documenter::validation',
+        $view = 'laravel-api-documenter::index'
+    ) {
         $this->errors   = [];
         $this->warnings = [];
         $this->info     = [];
         $this->setMiddleware($middleware)
-            ->setPrefix($prefix);
+            ->setPrefix($prefix)
+            ->setDescriptions($descriptions);
     }
 
     /**
@@ -53,6 +62,36 @@ class LaravelAPIDocumenter
         $this->prefix = $prefix;
 
         return $this;
+    }
+
+    /**
+     * Language pack setter
+     *
+     * @param string $descriptions
+     */
+    public function setDescriptions($descriptions)
+    {
+        $this->descriptions = $descriptions;
+    }
+
+    /**
+     * Sets the name of the View
+     *
+     * @param string $view
+     */
+    public function setView($view)
+    {
+        $this->view = $view;
+    }
+
+    /**
+     * Gets the name of the view
+     *
+     * @return mixed
+     */
+    public function getView()
+    {
+        return $this->view;
     }
 
     /**
@@ -264,7 +303,7 @@ class LaravelAPIDocumenter
      */
     private function getRuleDescription($name, $attribute, $args = [])
     {
-        $text = __("validation.$name");
+        $text = __("$this->descriptions.$name");
 
         if (is_array($text)) {
 
