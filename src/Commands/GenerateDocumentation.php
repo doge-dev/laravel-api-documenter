@@ -94,11 +94,7 @@ class GenerateDocumentation extends Command
 
         if ($this->option('export-path')) {
 
-            $parameters = ['routes' => $documenter->getRoutes()];
-
-            $html = view($documenter->getView(), $parameters)->render();
-
-            file_put_contents($this->option('export-path'), $html);
+            $documenter->saveHTMLToPath($this->option('export-path'));
         }
 
         return null;

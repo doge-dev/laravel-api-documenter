@@ -170,6 +170,42 @@ class LaravelAPIDocumenter
     }
 
     /**
+     * Gets the string contents of the View
+     *
+     * @return string
+     * @throws \Throwable
+     */
+    public function getHTML()
+    {
+        $routes = $this->getRoutes();
+
+        return $this->renderView()->render();
+    }
+
+    /**
+     * Saves the API documentation to a file
+     *
+     * @param string $path
+     * @throws \Throwable
+     */
+    public function saveHTMLToFile($path)
+    {
+        file_put_contents($path, $this->getHTML());
+    }
+
+    /**
+     * Get the evaluated view contents for the API documentation view.
+     *
+     * @return \Illuminate\Contracts\View\Factory|\Illuminate\View\View
+     */
+    public function renderView()
+    {
+        $routes = $this->getRoutes();
+
+        return view($this->getView(), ['routes' => $routes]);
+    }
+
+    /**
      * Parses the a Route
      *
      * @param Route $route
