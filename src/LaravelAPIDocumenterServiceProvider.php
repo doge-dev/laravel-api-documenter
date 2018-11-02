@@ -19,8 +19,8 @@ class LaravelAPIDocumenterServiceProvider extends ServiceProvider
             __DIR__.'/../resources/views' => resource_path('views/vendor/laravel-api-documenter'),
         ], 'laravel-api-documenter.config');
 
-        $this->loadTranslationsFrom(__DIR__ . '../resources/lang', 'laravel-api-documenter');
-        $this->loadViewsFrom(__DIR__.'../resources/views', 'laravel-api-documenter');
+        $this->loadTranslationsFrom(__DIR__ . '/../resources/lang', 'laravel-api-documenter');
+        $this->loadViewsFrom(__DIR__.'/../resources/views', 'laravel-api-documenter');
 
         // $this->loadMigrationsFrom(__DIR__.'/../database/migrations');
         // $this->loadRoutesFrom(__DIR__.'/routes.php');
