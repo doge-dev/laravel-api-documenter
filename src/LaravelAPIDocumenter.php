@@ -35,7 +35,8 @@ class LaravelAPIDocumenter
         $this->info     = [];
         $this->setMiddleware($middleware)
             ->setPrefix($prefix)
-            ->setDescriptions($descriptions);
+            ->setDescriptions($descriptions)
+            ->setView($view);
     }
 
     /**
@@ -68,20 +69,26 @@ class LaravelAPIDocumenter
      * Language pack setter
      *
      * @param string $descriptions
+     * @return $this
      */
     public function setDescriptions($descriptions)
     {
         $this->descriptions = $descriptions;
+
+        return $this;
     }
 
     /**
      * Sets the name of the View
      *
      * @param string $view
+     * @return $this
      */
     public function setView($view)
     {
         $this->view = $view;
+
+        return $this;
     }
 
     /**
