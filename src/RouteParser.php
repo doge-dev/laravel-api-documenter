@@ -285,7 +285,7 @@ class RouteParser
     private function getRuleDescription($name, $attribute, $args = [])
     {
         // TODO: replace with env
-        $text = trans(config("laravel-api-documenter.view").".$name");
+        $text = trans(config("laravel-api-documenter.descriptions").".$name");
 
         if (is_array($text)) {
 
@@ -353,7 +353,7 @@ class RouteParser
 
                         $object = $this->mockClass(substr($class, 0, -2), true);
 
-                    } elseif (!in_array($class, ['array', 'string', 'int', 'float', 'bool', 'boolean', 'mixed'])) {
+                    } elseif (!in_array($class, ['mixed', 'array', 'string', 'float', 'int', 'boolean', 'bool', 'null', 'void'])) {
 
                         $object = $this->mockClass($class);
                     }

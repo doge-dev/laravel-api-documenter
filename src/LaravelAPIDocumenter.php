@@ -11,26 +11,17 @@ class LaravelAPIDocumenter
 {
     protected $middleware;
     protected $prefix;
-    protected $descriptions;
-    protected $view;
+    protected $viewTemplate;
 
     /**
      * LaravelAPIDocumenter constructor.
-     * @param array $middleware
-     * @param array $prefix
-     * @param string $descriptions
-     * @param string $view
      */
-    public function __construct(
-        array $middleware = [],
-        array $prefix = [],
-        $descriptions = 'laravel-api-documenter::validation',
-        $view = 'laravel-api-documenter::index'
-    ) {
-        $this->setMiddleware($middleware)
-            ->setPrefix($prefix)
-            ->setDescriptions($descriptions)
-            ->setView($view);
+    public function __construct()
+    {
+        $this
+            ->setMiddleware(config('laravel-api-documenter.middleware'))
+            ->setPrefix(config('laravel-api-documenter.prefix'))
+            ->setViewTemplate(config('laravel-api-documenter.view-template'));
     }
 
     /**
@@ -47,6 +38,16 @@ class LaravelAPIDocumenter
     }
 
     /**
+     * Middleware getter
+     *
+     * @return array
+     */
+    public function getMiddleware()
+    {
+        return $this->middleware;
+    }
+
+    /**
      * Prefix setter
      *
      * @param array $prefix
@@ -60,59 +61,36 @@ class LaravelAPIDocumenter
     }
 
     /**
-     * Language pack setter
+     * Prefix getter
      *
-     * @param string $descriptions
+     * @return array
+     */
+    public function getPrefix()
+    {
+        return $this->prefix;
+    }
+
+    /**
+     * Sets the View blade template
+     *
+     * @param string $viewTemplate
      * @return $this
      */
-    public function setDescriptions($descriptions)
+    public function setViewTemplate($viewTemplate)
     {
-        $this->descriptions = $descriptions;
+        $this->viewTemplate = $viewTemplate;
 
         return $this;
     }
 
     /**
-     * Sets the name of the View
-     *
-     * @param string $view
-     * @return $this
-     */
-    public function setView($view)
-    {
-        $this->view = $view;
-
-        return $this;
-    }
-
-    /**
-     * Gets the name of the view
+     * Gets the View blade template
      *
      * @return mixed
      */
-    public function getView()
+    public function getViewTemplate()
     {
-        return $this->view;
-    }
-
-    /**
-     * Errors getter
-     *
-     * @return array
-     */
-    public function getErrors()
-    {
-        return $this->errors;
-    }
-
-    /**
-     * Warnings getter
-     *
-     * @return array
-     */
-    public function getWarnings()
-    {
-        return $this->warnings;
+        return $this->viewTemplate;
     }
 
     /**
@@ -130,18 +108,22 @@ class LaravelAPIDocumenter
         }
 
         $result = collect($result);
-
-        if ($this->middleware) {
-
-            $result = $this->filterOutByMiddleware($result, $this->middleware);
-        }
-
-        if ($this->prefix) {
-
-            $result = $this->filterOutByPrefix($result, $this->prefix);
-        }
+        $result = $this->filterOutByMiddleware($result, $this->middleware);
+        $result = $this->filterOutByPrefix($result, $this->prefix);
 
         return $result;
+    }
+
+    /**
+     * Get the evaluated view contents for the API documentation view.
+     *
+     * @return \Illuminate\Contracts\View\Factory|\Illuminate\View\View
+     */
+    public function getView()
+    {
+        $routes = $this->getRoutes();
+
+        return view($this->getViewTemplate(), ['routes' => $routes]);
     }
 
     /**
@@ -152,9 +134,7 @@ class LaravelAPIDocumenter
      */
     public function getHTML()
     {
-        $routes = $this->getRoutes();
-
-        return $this->renderView()->render();
+        return $this->getView()->render();
     }
 
     /**
@@ -169,25 +149,13 @@ class LaravelAPIDocumenter
     }
 
     /**
-     * Get the evaluated view contents for the API documentation view.
-     *
-     * @return \Illuminate\Contracts\View\Factory|\Illuminate\View\View
-     */
-    public function renderView()
-    {
-        $routes = $this->getRoutes();
-
-        return view($this->getView(), ['routes' => $routes]);
-    }
-
-    /**
      * Filters out the collection by middleware
      *
      * @param Collection $result
      * @param array $middleware
      * @return Collection|static
      */
-    private function filterOutByMiddleware(Collection &$result, array $middleware)
+    private function filterOutByMiddleware(Collection $result, array $middleware)
     {
         if (empty($middleware)) {
 
@@ -209,7 +177,7 @@ class LaravelAPIDocumenter
      * @param array $prefixes
      * @return Collection|static
      */
-    private function filterOutByPrefix(Collection &$result, array $prefixes)
+    private function filterOutByPrefix(Collection $result, array $prefixes)
     {
         if (empty($prefixes)) {
 

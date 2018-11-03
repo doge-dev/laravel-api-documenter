@@ -1,5 +1,8 @@
 <?php
 
 return [
-    'view' => 'laravel-api-documenter::validation'
+    'view-template' => 'laravel-api-documenter::index',
+    'descriptions'  => 'laravel-api-documenter::validation',
+    'middleware'    => [],
+    'prefix'        => [],
 ];

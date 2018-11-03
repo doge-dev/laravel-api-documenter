@@ -192,10 +192,12 @@
                         <h2 id="route{{$key}}">{{ $route->methods->first() }} {{$route->uri}}</h2>
 
                         @if ($route->controller)
-                            <p>{{$route->controller->comment->text}}</p>
+                            <p><b>{{ $route->controller->comment->text }}</b></p>
                         @endif
 
                         @if ($route->function)
+
+                            <p>{{ $route->function->comment->text }}</p>
 
                             @if ($route->function->request)
                                 <section>
@@ -232,6 +234,30 @@
                                     @endforeach
                                 </section>
                             @endif
+
+                        @endif
+
+                        @if (env('APP_DEBUG'))
+
+                            <section>
+                                <h3>Errors</h3>
+
+                                @foreach ($route->errors as $error)
+                                    <div class="alert alert-danger" role="alert">
+                                        {{ $error }}
+                                    </div>
+                                @endforeach
+                            </section>
+
+                            <section>
+                                <h3>Warnings</h3>
+
+                                @foreach ($route->warnings as $warning)
+                                    <div class="alert alert-warning" role="alert">
+                                        {{ $warning }}
+                                    </div>
+                                @endforeach
+                            </section>
 
                         @endif
                     </div>
