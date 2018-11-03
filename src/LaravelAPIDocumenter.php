@@ -2,7 +2,7 @@
 
 namespace DogeDev\LaravelAPIDocumenter;
 
-use Illuminate\Http\Request;
+use App\Http\Controllers\PostController;
 use Illuminate\Routing\Route;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Route as RouteFacade;
@@ -13,9 +13,6 @@ class LaravelAPIDocumenter
     protected $prefix;
     protected $descriptions;
     protected $view;
-    protected $errors;
-    protected $warnings;
-    protected $info;
 
     /**
      * LaravelAPIDocumenter constructor.
@@ -30,9 +27,6 @@ class LaravelAPIDocumenter
         $descriptions = 'laravel-api-documenter::validation',
         $view = 'laravel-api-documenter::index'
     ) {
-        $this->errors   = [];
-        $this->warnings = [];
-        $this->info     = [];
         $this->setMiddleware($middleware)
             ->setPrefix($prefix)
             ->setDescriptions($descriptions)
@@ -122,36 +116,17 @@ class LaravelAPIDocumenter
     }
 
     /**
-     * Info getter
-     *
-     * @return array
-     */
-    public function getInfo()
-    {
-        return $this->info;
-    }
-
-    /**
      * Gets a collection documented routes
      *
      * @return Collection
      */
     public function getRoutes()
     {
-        $this->errors   = [];
-        $this->warnings = [];
-        $this->info     = [];
+        $result = [];
 
         foreach (RouteFacade::getRoutes()->getRoutes() as $route) {
 
-            if (!is_string($route->action['uses'])) {
-
-                $this->error("[ERROR] Closure found on route: " . $route->uri);
-
-                continue;
-            }
-
-            $result[] = $this->parseRoute($route);
+            $result[] = (new RouteParser($route))->getObject();
         }
 
         $result = collect($result);
@@ -206,320 +181,6 @@ class LaravelAPIDocumenter
     }
 
     /**
-     * Parses the a Route
-     *
-     * @param Route $route
-     * @return object
-     */
-    private function parseRoute(Route $route)
-    {
-        list($class, $function) = explode('@', $route->action['uses']);
-
-        try {
-
-            $method = (new \ReflectionClass($class))->getMethod($function);
-
-            $rules = $this->getRules($method);
-
-            $comment = $this->processComment($method->getDocComment());
-
-            $return = $this->processReturnParameter($comment, $route->uri);
-
-        } catch (\Exception $e) {
-
-            $this->error("[ERROR] Method does not exist: $class@$function");
-
-            $rules = $comment = $return = collect([]);
-        }
-
-        return (object)[
-            'uri'        => $route->uri,
-            'methods'    => collect($route->methods),
-            'middleware' => collect($route->action['middleware']),
-            'class'      => $class,
-            'function'   => $function,
-            'comment'    => $comment,
-            'parameters' => $rules,
-            'return'     => $return,
-        ];
-    }
-
-    /**
-     * Loads rules from a custom request
-     *
-     * @param \ReflectionMethod $method
-     * @return array
-     */
-    private function getRules(\ReflectionMethod $method)
-    {
-        $result = [];
-
-        $found = false;
-
-        foreach ($method->getParameters() as $parameter) {
-
-            if ($parameter->getClass() === null) {
-
-                continue;
-            }
-
-            $class = $parameter->getClass()->name;
-
-            if (is_subclass_of($class, Request::class)) {
-
-                $found = true;
-
-                try {
-
-                    $rulesMethod = $parameter->getClass()->getMethod('rules');
-
-                    $rules = $rulesMethod->invoke(new $class);
-
-                    $result = $this->parseRules($rules);
-
-                } catch (\Exception $e) {
-
-                    $this->error("[ERROR] Failed invoking $class@rules");
-                }
-            }
-        }
-
-        if (!$found) {
-
-            $this->warn("[WARN] No custom request found on route " . $method->class . "@" . $method->getName());
-        }
-
-        return collect($result);
-    }
-
-    /**
-     * Parses rules
-     *
-     * @param array $rules
-     * @return array $result
-     */
-    private function parseRules(array $rules)
-    {
-        $result = [];
-
-        foreach ($rules as $attribute => $validation) {
-
-            $validations = [];
-
-            $validation = explode("|", $validation);
-
-            foreach ($validation as $rule) {
-
-                if (strpos($rule, ':')) {
-
-                    list($name, $args) = explode(":", $rule);
-
-                    $args = explode(",", $args);
-
-                } else {
-
-                    $name = $rule;
-                    $args = [];
-                }
-
-                $validations[] = (object)[
-                    'text'        => $rule,
-                    'name'        => $name,
-                    'args'        => $args,
-                    'description' => $this->getRuleDescription($name, $attribute, $args)
-                ];
-            }
-
-            $result[] = (object)[
-                'attribute'   => $attribute,
-                'validations' => collect($validations),
-            ];
-        }
-
-        return $result;
-    }
-
-    /**
-     * Gets the rule text from language validation
-     *
-     * @param $name
-     * @param $attribute
-     * @param array $args
-     * @return array|null|string
-     */
-    private function getRuleDescription($name, $attribute, $args = [])
-    {
-        $text = trans("$this->descriptions.$name");
-
-        if (is_array($text)) {
-
-            $text = array_shift($text);
-        }
-
-        $text = str_replace(":attribute", $attribute, $text);
-
-        $attributeCount = substr_count($text, " :");
-
-        if ($attributeCount === 0) {
-
-            return $text;
-        }
-
-        $words = explode(" ", $text);
-
-        if ($attributeCount === count($args)) {
-
-            foreach ($words as $key => $word) {
-
-                if (substr($word, 0, 1) === ":") {
-
-                    $words[$key] = array_shift($args);
-                }
-            }
-
-        } else {
-
-            $args = implode(",", $args);
-
-            foreach ($words as $key => $word) {
-
-                if (substr($word, 0, 1) === ":") {
-
-                    $words[$key] = $args;
-                }
-            }
-        }
-
-        return implode(" ", $words);
-    }
-
-    /**
-     * Analyzes the comment
-     *
-     * @param string $string
-     * @return object
-     */
-    private function processComment($string)
-    {
-        $string = str_replace('/**', '', $string);
-        $string = str_replace('*/', '', $string);
-
-        $tags = [];
-        $text = [];
-
-        $rows = explode("\n", $string);
-
-        foreach ($rows as $row) {
-
-            $row = trim($row);
-
-            if (substr($row, 0, 1) === '*') {
-
-                $row = trim(substr($row, 1));
-            }
-
-            if (substr($row, 0, 1) === '@') {
-
-                $firstSpace = strpos($row, ' ') ?: strlen($row);
-
-                $tags[] = (object)[
-                    'type'  => substr($row, 0, $firstSpace),
-                    'value' => substr($row, $firstSpace + 1),
-                ];
-
-            } else {
-
-                $text[] = $row;
-            }
-        }
-
-        return (object)[
-            'text'     => trim(implode("\n", $text)),
-            'tags'     => collect($tags),
-            'original' => "/**" . $string . "*/",
-        ];
-    }
-
-    /**
-     * Attempts to process the comments
-     *
-     * @param $comment
-     * @param $uri
-     * @return array
-     */
-    private function processReturnParameter($comment, $uri)
-    {
-        $result = [];
-
-        foreach ($comment->tags as $tag) {
-
-            if ($tag->type === '@return') {
-
-                foreach (explode("|", $tag->value) as $class) {
-
-                    $clss   = trim($class);
-                    $object = null;
-
-                    if (substr($class, -2) === '[]') {
-
-                        $object = $this->mockClass(substr($class, 0 ,-2), $uri, true);
-
-                    } elseif (!in_array($class, ['array', 'string', 'int', 'float', 'bool', 'boolean'])) {
-
-                        $object = $this->mockClass($class, $uri);
-                    }
-
-                    $result[] = (object)[
-                        'type'   => $class,
-                        'object' => $object,
-                    ];
-                }
-            }
-        }
-
-        return collect($result);
-    }
-
-    /**
-     * Mocks a class using a seed factory
-     *
-     * @param $class
-     * @param string $uri
-     * @param bool $array
-     * @return mixed|null
-     */
-    private function mockClass($class, $uri, $array = false)
-    {
-        if (!class_exists($class)) {
-
-            $this->error("[ERROR] Return class $class not found in $uri");
-
-            return null;
-        }
-
-        if (substr($class, 0, 1) === '\\') {
-
-            $class = substr($class, 1);
-        }
-
-        try {
-
-            if ($array) {
-
-                return factory($class, 2)->make();
-            }
-
-            return factory($class)->make();
-
-        } catch (\Exception $e) {
-
-            $this->error("[ERROR] Failed mocking class $class");
-        }
-
-        return null;
-    }
-
-    /**
      * Filters out the collection by middleware
      *
      * @param Collection $result
@@ -567,35 +228,5 @@ class LaravelAPIDocumenter
 
             return false;
         });
-    }
-
-    /**
-     * Logs and error
-     *
-     * @param $error
-     */
-    private function error($error)
-    {
-        $this->errors[] = $error;
-    }
-
-    /**
-     * Logs a warning
-     *
-     * @param $warning
-     */
-    private function warn($warning)
-    {
-        $this->warnings[] = $warning;
-    }
-
-    /**
-     * Logs an info
-     *
-     * @param $info
-     */
-    private function info($info)
-    {
-        $this->info[] = $info;
     }
 }

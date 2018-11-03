@@ -190,39 +190,49 @@
                 @foreach($routes as $key => $route)
                     <div class="col-md-12 well">
                         <h2 id="route{{$key}}">{{ $route->methods->first() }} {{$route->uri}}</h2>
-                        <p>{{$route->comment->text}}</p>
 
-                        @if($route->parameters->count() > 0)
-                            <section>
-                                <h3>Parameters</h3>
-                                <ul>
-                                    @foreach($route->parameters as $parameter)
-                                        <li>
-                                            <b>{{$parameter->attribute}}</b>
-                                            <ul>
-                                                @foreach($parameter->validations as $validation)
-                                                    <li>{{ $validation->description }}</li>
-                                                @endforeach
-                                            </ul>
-                                        </li>
-                                    @endforeach
-                                </ul>
-
-                            </section>
+                        @if ($route->controller)
+                            <p>{{$route->controller->comment->text}}</p>
                         @endif
 
-                        @if($route->return->count() > 0)
-                            <section>
-                                <h3>Returns</h3>
-                                @foreach ($route->return as $return)
+                        @if ($route->function)
 
-                                    <code>{{$return->type}}</code>
-                                    @if ($return->object !== null)
-                                        <pre><code>{{json_encode($return->object, JSON_PRETTY_PRINT)}}</code></pre>
+                            @if ($route->function->request)
+                                <section>
+                                    <h3>Parameters</h3>
+                                    @if ($route->function->request->parameters)
+                                        <ul>
+                                            @foreach($route->function->request->parameters as $parameter)
+                                                <li>
+                                                    <b>{{$parameter->attribute}}</b>
+                                                    <ul>
+                                                        @foreach($parameter->validations as $validation)
+                                                            <li>{{ $validation->description }}</li>
+                                                        @endforeach
+                                                    </ul>
+                                                </li>
+                                            @endforeach
+                                        </ul>
+                                    @else
+                                        <p>No parameters required</p>
                                     @endif
+                                </section>
+                            @endif
 
-                                @endforeach
-                            </section>
+                            @if($route->function->return)
+                                <section>
+                                    <h3>Returns</h3>
+                                    @foreach ($route->function->return as $return)
+
+                                        <code>{{ $return->type }}</code>
+                                        @if ($return->object !== null)
+                                            <pre><code>{{json_encode($return->object, JSON_PRETTY_PRINT)}}</code></pre>
+                                        @endif
+
+                                    @endforeach
+                                </section>
+                            @endif
+
                         @endif
                     </div>
                 @endforeach
