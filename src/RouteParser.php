@@ -285,7 +285,7 @@ class RouteParser
     private function getRuleDescription($name, $attribute, $args = [])
     {
         // TODO: replace with env
-        $text = trans("laravel-api-documenter::validation.$name");
+        $text = trans(config("laravel-api-documenter.view").".$name");
 
         if (is_array($text)) {
 

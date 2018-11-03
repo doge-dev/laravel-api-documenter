@@ -16,15 +16,13 @@ class LaravelAPIDocumenterServiceProvider extends ServiceProvider
     {
         // Publishing the configuration file.
         $this->publishes([
-            __DIR__.'/../resources/views' => resource_path('views/vendor/laravel-api-documenter'),
-            __DIR__.'/../resources/lang' => resource_path('lang/vendor/laravel-api-documenter'),
+            __DIR__ . '/../resources/views'                   => resource_path('views/vendor/laravel-api-documenter'),
+            __DIR__ . '/../resources/lang'                    => resource_path('lang/vendor/laravel-api-documenter'),
+            __DIR__ . '/../config/laravel-api-documenter.php' => config_path('laravel-api-documenter.php'),
         ], 'laravel-api-documenter.config');
 
         $this->loadTranslationsFrom(__DIR__ . '/../resources/lang', 'laravel-api-documenter');
-        $this->loadViewsFrom(__DIR__.'/../resources/views', 'laravel-api-documenter');
-
-        // $this->loadMigrationsFrom(__DIR__.'/../database/migrations');
-        // $this->loadRoutesFrom(__DIR__.'/routes.php');
+        $this->loadViewsFrom(__DIR__ . '/../resources/views', 'laravel-api-documenter');
 
         // Publishing is only necessary when using the CLI.
         if ($this->app->runningInConsole()) {
@@ -41,10 +39,13 @@ class LaravelAPIDocumenterServiceProvider extends ServiceProvider
      */
     public function register()
     {
-        // Register the service the package provides.
         $this->app->singleton('laravel-api-documenter', function ($app) {
             return new LaravelAPIDocumenter;
         });
+
+        $this->mergeConfigFrom(
+            __DIR__.'/../config/laravel-api-documenter.php', 'laravel-api-documenter'
+        );
     }
 
     /**
