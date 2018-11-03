@@ -192,15 +192,15 @@
                         <h2 id="route{{$key}}">{{ $route->methods->first() }} {{$route->uri}}</h2>
                         <p>{{$route->comment->text}}</p>
 
-                        @if($route->rules->count() > 0)
+                        @if($route->parameters->count() > 0)
                             <section>
                                 <h3>Parameters</h3>
                                 <ul>
-                                    @foreach($route->rules as $rule)
+                                    @foreach($route->parameters as $parameter)
                                         <li>
-                                            <b>{{$rule->attribute}}</b>
+                                            <b>{{$parameter->attribute}}</b>
                                             <ul>
-                                                @foreach($rule->validations as $validation)
+                                                @foreach($parameter->validations as $validation)
                                                     <li>{{ $validation->description }}</li>
                                                 @endforeach
                                             </ul>
@@ -210,13 +210,28 @@
 
                             </section>
                         @endif
+
+                        @if($route->return->count() > 0)
+                            <section>
+                                <h3>Returns</h3>
+                                @foreach ($route->return as $return)
+
+                                    <code>{{$return->type}}</code>
+                                    @if ($return->object !== null)
+                                        <pre><code>{{json_encode($return->object, JSON_PRETTY_PRINT)}}</code></pre>
+                                    @endif
+
+                                @endforeach
+                            </section>
+                        @endif
                     </div>
                 @endforeach
             </div>
 
             <div class="navbar navbar-default navbar-static-bottom">
                 <p class="navbar-text pull-left">
-                    Built with <a href="https://github.com/doge-dev/laravel-api-documenter" target="_blank">Laravel API Documenter</a>
+                    Built with <a href="https://github.com/doge-dev/laravel-api-documenter" target="_blank">Laravel API
+                        Documenter</a>
                 </p>
             </div>
         </div>

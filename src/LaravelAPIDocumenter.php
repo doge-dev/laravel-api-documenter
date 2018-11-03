@@ -19,8 +19,8 @@ class LaravelAPIDocumenter
 
     /**
      * LaravelAPIDocumenter constructor.
-     * @param array  $middleware
-     * @param array  $prefix
+     * @param array $middleware
+     * @param array $prefix
      * @param string $descriptions
      * @param string $view
      */
@@ -221,13 +221,15 @@ class LaravelAPIDocumenter
 
             $rules = $this->getRules($method);
 
-            $comments = $this->processComment($method->getDocComment());
+            $comment = $this->processComment($method->getDocComment());
+
+            $return = $this->processReturnParameter($comment, $route->uri);
 
         } catch (\Exception $e) {
 
             $this->error("[ERROR] Method does not exist: $class@$function");
 
-            $rules = $comments = collect([]);
+            $rules = $comment = $return = collect([]);
         }
 
         return (object)[
@@ -236,8 +238,9 @@ class LaravelAPIDocumenter
             'middleware' => collect($route->action['middleware']),
             'class'      => $class,
             'function'   => $function,
-            'comment'    => $comments,
-            'rules'      => $rules,
+            'comment'    => $comment,
+            'parameters' => $rules,
+            'return'     => $return,
         ];
     }
 
@@ -346,7 +349,7 @@ class LaravelAPIDocumenter
      */
     private function getRuleDescription($name, $attribute, $args = [])
     {
-        $text = __("$this->descriptions.$name");
+        $text = trans("$this->descriptions.$name");
 
         if (is_array($text)) {
 
@@ -433,8 +436,87 @@ class LaravelAPIDocumenter
         return (object)[
             'text'     => trim(implode("\n", $text)),
             'tags'     => collect($tags),
-            'original' => $string,
+            'original' => "/**" . $string . "*/",
         ];
+    }
+
+    /**
+     * Attempts to process the comments
+     *
+     * @param $comment
+     * @param $uri
+     * @return array
+     */
+    private function processReturnParameter($comment, $uri)
+    {
+        $result = [];
+
+        foreach ($comment->tags as $tag) {
+
+            if ($tag->type === '@return') {
+
+                foreach (explode("|", $tag->value) as $class) {
+
+                    $clss   = trim($class);
+                    $object = null;
+
+                    if (substr($class, -2) === '[]') {
+
+                        $object = $this->mockClass(substr($class, 0 ,-2), $uri, true);
+
+                    } elseif (!in_array($class, ['array', 'string', 'int', 'float', 'bool', 'boolean'])) {
+
+                        $object = $this->mockClass($class, $uri);
+                    }
+
+                    $result[] = (object)[
+                        'type'   => $class,
+                        'object' => $object,
+                    ];
+                }
+            }
+        }
+
+        return collect($result);
+    }
+
+    /**
+     * Mocks a class using a seed factory
+     *
+     * @param $class
+     * @param string $uri
+     * @param bool $array
+     * @return mixed|null
+     */
+    private function mockClass($class, $uri, $array = false)
+    {
+        if (!class_exists($class)) {
+
+            $this->error("[ERROR] Return class $class not found in $uri");
+
+            return null;
+        }
+
+        if (substr($class, 0, 1) === '\\') {
+
+            $class = substr($class, 1);
+        }
+
+        try {
+
+            if ($array) {
+
+                return factory($class, 2)->make();
+            }
+
+            return factory($class)->make();
+
+        } catch (\Exception $e) {
+
+            $this->error("[ERROR] Failed mocking class $class");
+        }
+
+        return null;
     }
 
     /**

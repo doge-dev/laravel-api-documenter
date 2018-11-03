@@ -81,5 +81,5 @@ return [
     'string'               => 'The :attribute must be a string.',
     'timezone'             => 'The :attribute must be a valid time zone.',
     'unique'               => 'The :attribute needs to be unique in :table.',
-    'url'                  => 'The :attribute format is invalid.',
+    'url'                  => 'The :attribute must be a valid URL.',
 ];
