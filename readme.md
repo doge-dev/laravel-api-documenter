@@ -1,9 +1,11 @@
-# LaravelAPIDocumenter
+# Proper Lad (Laravel API Documenter)
 
 [![Latest Version on Packagist][ico-version]][link-packagist]
 [![Total Downloads][ico-downloads]][link-downloads]
 [![Build Status][ico-travis]][link-travis]
 [![StyleCI][ico-styleci]][link-styleci]
+
+Proper Lad (Proper Laravel API Documenter) provides a way for parsing routes and generating an API documentation. It parses comments and input/output parameters of Controller functions exposed by the API. 
 
 This is where your description should go. Take a look at [contributing.md](contributing.md) to see a to do list.
 

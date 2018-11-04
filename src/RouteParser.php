@@ -4,6 +4,7 @@ namespace DogeDev\LaravelAPIDocumenter;
 
 use Illuminate\Routing\Route;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Route as RouteFacade;
 
 class RouteParser
 {
@@ -53,13 +54,17 @@ class RouteParser
     {
         return (object)[
             'uri'        => $this->route->uri,
+            'name'       => @$this->route->action['as'],
             'methods'    => collect($this->route->methods),
-            'middleware' => collect($this->route->action['middleware']),
+            'middleware' => (object)[
+                'names'   => collect($this->route->action['middleware']),
+                'classes' => collect(RouteFacade::gatherRouteMiddleware($this->route)),
+            ],
             'controller' => $this->controllerReflection ? (object)[
-                'name'     => $this->controllerReflection->name,
-                'comment'  => $this->getCommentFromString($this->controllerReflection->getDocComment()),
+                'name'    => $this->controllerReflection->name,
+                'comment' => $this->getCommentFromString($this->controllerReflection->getDocComment()),
             ] : null,
-            'function' => $this->functionReflection ? (object)[
+            'function'   => $this->functionReflection ? (object)[
                 'name'    => $this->functionReflection->name,
                 'comment' => $this->getCommentFromString($this->functionReflection->getDocComment()),
                 'request' => $this->requestReflection ? (object)[
@@ -68,8 +73,8 @@ class RouteParser
                 ] : null,
                 'return'  => $this->getReturnParameter(),
             ] : null,
-            'errors'     => $this->errors,
-            'warnings'   => $this->warnings,
+            'errors'     => collect($this->errors),
+            'warnings'   => collect($this->warnings),
         ];
     }
 
@@ -181,8 +186,8 @@ class RouteParser
                 $firstSpace = strpos($row, ' ') ?: strlen($row);
 
                 $tags[] = (object)[
-                    'type'  => substr($row, 0, $firstSpace),
-                    'value' => substr($row, $firstSpace + 1),
+                    'type'  => trim(substr($row, 0, $firstSpace)),
+                    'value' => trim(substr($row, $firstSpace + 1)),
                 ];
 
             } else {
@@ -285,7 +290,7 @@ class RouteParser
     private function getRuleDescription($name, $attribute, $args = [])
     {
         // TODO: replace with env
-        $text = trans(config("laravel-api-documenter.descriptions").".$name");
+        $text = trans(config("laravel-api-documenter.descriptions") . ".$name");
 
         if (is_array($text)) {
 
@@ -344,16 +349,32 @@ class RouteParser
 
             if ($tag->type === '@return') {
 
-                foreach (explode("|", $tag->value) as $class) {
+                if ($firstSpacePosition = strpos($tag->value, " ")) {
 
-                    $clss   = trim($class);
+                    $text    = substr($tag->value, $firstSpacePosition);
+                    $classes = substr($tag->value, 0, $firstSpacePosition);
+
+                } else {
+
+                    $text    = null;
+                    $classes = $tag->value;
+                }
+
+                foreach (explode("|", $classes) as $class) {
+
+                    if (substr($class, 0, 1) === '\\') {
+
+                        $class = substr($class, 1);
+                    }
+
                     $object = null;
 
                     if (substr($class, -2) === '[]') {
 
                         $object = $this->mockClass(substr($class, 0, -2), true);
 
-                    } elseif (!in_array($class, ['mixed', 'array', 'string', 'float', 'int', 'boolean', 'bool', 'null', 'void'])) {
+                    } elseif (!in_array($class,
+                        ['mixed', 'array', 'string', 'float', 'int', 'boolean', 'bool', 'null', 'void'])) {
 
                         $object = $this->mockClass($class);
                     }
@@ -361,6 +382,7 @@ class RouteParser
                     $result[] = (object)[
                         'type'   => $class,
                         'object' => $object,
+                        'text'   => $text,
                     ];
                 }
             }
@@ -381,11 +403,6 @@ class RouteParser
             $this->error("Return class `$class` not found");
 
             return null;
-        }
-
-        if (substr($class, 0, 1) === '\\') {
-
-            $class = substr($class, 1);
         }
 
         try {
@@ -412,7 +429,7 @@ class RouteParser
      */
     private function error($error)
     {
-        $this->errors[] = $error . " @ [".$this->route->methods[0]." ".$this->route->uri."]";
+        $this->errors[] = $error . " @ [" . $this->route->methods[0] . " " . $this->route->uri . "]";
     }
 
     /**
@@ -422,6 +439,6 @@ class RouteParser
      */
     private function warn($warning)
     {
-        $this->warnings[] = $warning . " @ [".$this->route->methods[0]." ".$this->route->uri."]";
+        $this->warnings[] = $warning . " @ [" . $this->route->methods[0] . " " . $this->route->uri . "]";
     }
 }

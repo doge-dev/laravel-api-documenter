@@ -201,20 +201,27 @@
 
                             @if ($route->function->request)
                                 <section>
-                                    <h3>Parameters</h3>
-                                    @if ($route->function->request->parameters)
-                                        <ul>
+                                    @if ($route->function->request->parameters && $route->function->request->parameters->count() > 0)
+                                        <table class="table table-striped table-bordered table-hover">
+                                            <thead>
+                                            <tr>
+                                                <th scope="col">Parameter</th>
+                                                <th scope="col">Constraints</th>
+                                            </tr>
+                                            </thead>
+                                            <tbody>
                                             @foreach($route->function->request->parameters as $parameter)
-                                                <li>
-                                                    <b>{{$parameter->attribute}}</b>
-                                                    <ul>
+                                                <tr>
+                                                    <td><b>{{$parameter->attribute}}</b></td>
+                                                    <td>
                                                         @foreach($parameter->validations as $validation)
-                                                            <li>{{ $validation->description }}</li>
+                                                            <div>{{ $validation->description }}</div>
                                                         @endforeach
-                                                    </ul>
-                                                </li>
+                                                    </td>
+                                                </tr>
                                             @endforeach
-                                        </ul>
+                                            </tbody>
+                                        </table>
                                     @else
                                         <p>No parameters required</p>
                                     @endif
@@ -226,10 +233,14 @@
                                     <h3>Returns</h3>
                                     @foreach ($route->function->return as $return)
 
-                                        <code>{{ $return->type }}</code>
-                                        @if ($return->object !== null)
-                                            <pre><code>{{json_encode($return->object, JSON_PRETTY_PRINT)}}</code></pre>
-                                        @endif
+                                        <div>
+                                            <code><b>{{ $return->type }}</b></code> {{ substr($return->text, strpos($return->text, ' ')) }}
+                                            @if ($return->object !== null)
+                                                <pre><code class="bg-white">{{json_encode($return->object, JSON_PRETTY_PRINT)}}</code></pre>
+                                            @elseif (\Lang::has( config( "laravel-api-documenter.examples" ) . "." . $return->type ) )
+                                                <pre><code class="bg-white">{{ json_encode( __( config("laravel-api-documenter.examples") . "." . $return->type ), JSON_PRETTY_PRINT ) }}</code></pre>
+                                            @endif
+                                        </div>
 
                                     @endforeach
                                 </section>
@@ -239,25 +250,29 @@
 
                         @if (env('APP_DEBUG'))
 
-                            <section>
-                                <h3>Errors</h3>
+                            @if ($route->errors->count() > 0)
+                                <section>
+                                    <h3 class="text-danger">Errors</h3>
 
-                                @foreach ($route->errors as $error)
-                                    <div class="alert alert-danger" role="alert">
-                                        {{ $error }}
-                                    </div>
-                                @endforeach
-                            </section>
+                                    @foreach ($route->errors as $error)
+                                        <div class="alert alert-danger" role="alert">
+                                            {{ $error }}
+                                        </div>
+                                    @endforeach
+                                </section>
+                            @endif
 
-                            <section>
-                                <h3>Warnings</h3>
+                            @if ($route->warnings->count() > 0)
+                                <section>
+                                    <h3 class="text-warning">Warnings</h3>
 
-                                @foreach ($route->warnings as $warning)
-                                    <div class="alert alert-warning" role="alert">
-                                        {{ $warning }}
-                                    </div>
-                                @endforeach
-                            </section>
+                                    @foreach ($route->warnings as $warning)
+                                        <div class="alert alert-warning" role="alert">
+                                            {{ $warning }}
+                                        </div>
+                                    @endforeach
+                                </section>
+                            @endif
 
                         @endif
                     </div>
