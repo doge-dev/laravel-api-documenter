@@ -14,8 +14,12 @@ class GenerateDocumentation extends Command
      * @var string
      */
     protected $signature = 'doge-dev:generate-documentation 
+    {--show-errors : Outputs Errors }
+    {--show-warnings : Outputs Warnings }
     {--middleware= : Filter out the routes by middleware(s) (comma delimited) }
-    {--prefix= : Filter out the routes by prefix(es) (comma delimited) }';
+    {--prefix= : Filter out the routes by prefix(es) (comma delimited) }
+    {--export-path= : Export an HTML to path }
+    {--render-table : Render table in the console. }';
 
     /**
      * The console command description.
@@ -53,7 +57,33 @@ class GenerateDocumentation extends Command
             $documenter->setPrefix(explode(',', $this->option('prefix')));
         }
 
-        $result = $documenter->getRoutes();
+        $results = $documenter->getRoutes();
+
+        if ($this->option('show-warnings')) {
+
+            foreach ($documenter->getWarnings() as $warning) {
+
+                $this->warn($warning);
+            }
+        }
+
+        if ($this->option('show-errors')) {
+
+            foreach ($documenter->getErrors() as $error) {
+
+                $this->error($error);
+            }
+        }
+
+        if ($this->option('render-table')) {
+
+            $this->renderTable($results);
+        }
+
+        if ($this->option('export-path')) {
+
+            file_put_contents($this->option('export-path'), view('sample', ['name' => 'Code Chewing'])->render());
+        }
     }
 
     /**
