@@ -16,7 +16,7 @@ class LaravelAPIDocumenterServiceProvider extends ServiceProvider
     {
         // Publishing the configuration file.
         $this->publishes([
-            __DIR__.'/../config/laravelapidocumenter.php' => config_path('laravel-api-documenter.php'),
+            __DIR__.'/../config/laravel-api-documenter.php' => config_path('laravel-api-documenter.php'),
             __DIR__.'/../resources/views' => resource_path('views/vendor/laravel-api-documenter'),
         ], 'laravel-api-documenter.config');
 
@@ -41,7 +41,7 @@ class LaravelAPIDocumenterServiceProvider extends ServiceProvider
      */
     public function register()
     {
-        $this->mergeConfigFrom(__DIR__.'/../config/laravelapidocumenter.php', 'laravel-api-documenter');
+        $this->mergeConfigFrom(__DIR__.'/../config/laravel-api-documenter.php', 'laravel-api-documenter');
 
         // Register the service the package provides.
         $this->app->singleton('laravel-api-documenter', function ($app) {
