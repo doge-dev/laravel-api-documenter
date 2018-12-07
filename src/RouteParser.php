@@ -52,30 +52,55 @@ class RouteParser
      */
     public function getObject()
     {
-        return (object)[
-            'uri'        => $this->route->uri,
-            'name'       => @$this->route->action['as'],
-            'methods'    => collect($this->route->methods),
-            'middleware' => (object)[
-                'names'   => collect($this->route->action['middleware']),
-                'classes' => collect(RouteFacade::gatherRouteMiddleware($this->route)),
-            ],
-            'controller' => $this->controllerReflection ? (object)[
-                'name'    => $this->controllerReflection->name,
-                'comment' => $this->getCommentFromString($this->controllerReflection->getDocComment()),
-            ] : null,
-            'function'   => $this->functionReflection ? (object)[
-                'name'    => $this->functionReflection->name,
-                'comment' => $this->getCommentFromString($this->functionReflection->getDocComment()),
-                'request' => $this->requestReflection ? (object)[
-                    'class'      => $this->requestReflection->name,
-                    'parameters' => $this->getRules(),
+        return $this->getClassReplacement()
+
+            ?: (object)[
+                'uri'        => $this->route->uri,
+                'name'       => @$this->route->action['as'],
+                'methods'    => collect($this->route->methods),
+                'middleware' => (object)[
+                    'names'   => collect($this->route->action['middleware']),
+                    'classes' => collect(RouteFacade::gatherRouteMiddleware($this->route)),
+                ],
+                'controller' => $this->controllerReflection ? (object)[
+                    'name'    => $this->controllerReflection->name,
+                    'comment' => $this->getCommentFromString($this->controllerReflection->getDocComment()),
                 ] : null,
-                'return'  => $this->getReturnParameter(),
-            ] : null,
-            'errors'     => collect($this->errors),
-            'warnings'   => collect($this->warnings),
-        ];
+                'function'   => $this->functionReflection ? (object)[
+                    'name'    => $this->functionReflection->name,
+                    'comment' => $this->getCommentFromString($this->functionReflection->getDocComment()),
+                    'request' => $this->requestReflection ? (object)[
+                        'class'      => $this->requestReflection->name,
+                        'parameters' => $this->getRules(),
+                    ] : null,
+                    'return'  => $this->getReturnParameter(),
+                ] : null,
+                'errors'     => collect($this->errors),
+                'warnings'   => collect($this->warnings),
+            ];
+    }
+
+    /**
+     * Gets the example from the examples translation file
+     *
+     * @param bool $array
+     * @return array|null|string
+     */
+    private function getClassReplacement()
+    {
+        if (!$this->controllerReflection || !$this->functionReflection) {
+
+            return false;
+        }
+
+        $name = $this->controllerReflection->name . "@" . $this->functionReflection->name;
+
+        if (!\Lang::has("laravel-api-documenter::examples." . $name)) {
+
+            return false;
+        }
+
+        return json_decode(json_encode(__("laravel-api-documenter::examples." . $name)));
     }
 
     /**
