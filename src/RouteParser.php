@@ -88,7 +88,7 @@ class RouteParser
     {
         if (!class_exists($class)) {
 
-            $this->error("Controller Class `$class` does not exist");
+            $this->error("Controller `$class` does not exist");
 
             return null;
         }
@@ -289,7 +289,6 @@ class RouteParser
      */
     private function getRuleDescription($name, $attribute, $args = [])
     {
-        // TODO: replace with env
         $text = trans(config("laravel-api-documenter.descriptions") . ".$name");
 
         if (is_array($text)) {
@@ -367,22 +366,26 @@ class RouteParser
                         $class = substr($class, 1);
                     }
 
-                    $object = null;
+                    $object  = null;
+                    $example = null;
 
                     if (substr($class, -2) === '[]') {
 
-                        $object = $this->mockClass(substr($class, 0, -2), true);
+                        $object  = $this->mockClass(substr($class, 0, -2), true);
+                        $example = $this->getExample(substr($class, 0, -2), true);
 
                     } elseif (!in_array($class,
                         ['mixed', 'array', 'string', 'float', 'int', 'boolean', 'bool', 'null', 'void'])) {
 
-                        $object = $this->mockClass($class);
+                        $object  = $this->mockClass($class);
+                        $example = $this->getExample($class);
                     }
 
                     $result[] = (object)[
-                        'type'   => $class,
-                        'object' => $object,
-                        'text'   => $text,
+                        'type'    => $class,
+                        'object'  => $object,
+                        'example' => $example,
+                        'text'    => $text,
                     ];
                 }
             }
@@ -400,7 +403,7 @@ class RouteParser
     {
         if (!class_exists($class)) {
 
-            $this->error("Return class `$class` not found");
+            $this->warn("Return class `$class` not found");
 
             return null;
         }
@@ -423,13 +426,39 @@ class RouteParser
     }
 
     /**
+     * Gets the example from the examples translation file
+     *
+     * @param string $class
+     * @param bool $array
+     * @return array|null|string
+     */
+    private function getExample($class, $array = false)
+    {
+        if (!\Lang::has("laravel-api-documenter::examples." . $class)) {
+
+            $this->warn("Example for `$class` does not exist");
+
+            return null;
+        }
+
+        $example = __("laravel-api-documenter::examples." . $class);
+
+        if ($array) {
+
+            return [$example, $example];
+        }
+
+        return $example;
+    }
+
+    /**
      * Logs and error
      *
      * @param $error
      */
     private function error($error)
     {
-        $this->errors[] = $error . " @ [" . $this->route->methods[0] . " " . $this->route->uri . "]";
+        $this->errors[] = $error;
     }
 
     /**
@@ -439,6 +468,6 @@ class RouteParser
      */
     private function warn($warning)
     {
-        $this->warnings[] = $warning . " @ [" . $this->route->methods[0] . " " . $this->route->uri . "]";
+        $this->warnings[] = $warning;
     }
 }

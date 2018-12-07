@@ -192,11 +192,12 @@
                         <h2 id="route{{$key}}">{{ $route->methods->first() }} {{$route->uri}}</h2>
 
                         @if ($route->controller)
-                            <p><b>{{ $route->controller->comment->text }}</b></p>
+                            <p><b>{{  $route->controller->name }}</b></p>
                         @endif
 
                         @if ($route->function)
 
+                            <p>{{ $route->function->name }}</p>
                             <p>{{ $route->function->comment->text }}</p>
 
                             @if ($route->function->request)
@@ -237,13 +238,30 @@
                                             <code><b>{{ $return->type }}</b></code> {{ substr($return->text, strpos($return->text, ' ')) }}
                                             @if ($return->object !== null)
                                                 <pre><code class="bg-white">{{json_encode($return->object, JSON_PRETTY_PRINT)}}</code></pre>
-                                            @elseif (\Lang::has( config( "laravel-api-documenter.examples" ) . "." . $return->type ) )
-                                                <pre><code class="bg-white">{{ json_encode( __( config("laravel-api-documenter.examples") . "." . $return->type ), JSON_PRETTY_PRINT ) }}</code></pre>
+                                            @elseif ( $return->example !== null )
+                                                @if (is_array($return->example))
+                                                    <pre><code class="bg-white">{{ json_encode($return->example, JSON_PRETTY_PRINT ) }}</code></pre>
+                                                @else
+                                                    <pre><code class="bg-white">{{ $return->example }}</code></pre>
+                                                @endif
                                             @endif
                                         </div>
 
                                     @endforeach
                                 </section>
+                            @endif
+
+                            @if ($route->middleware)
+
+                                <h3>Middleware Names</h3>
+                                @foreach ($route->middleware->names as $name)
+                                    <div><a href="#">{{ $name }}</a></div>
+                                @endforeach
+
+                                <h3>Middleware Classes</h3>
+                                @foreach ($route->middleware->classes as $class)
+                                    <div><a href="#">{{ $class }}</a></div>
+                                @endforeach
                             @endif
 
                         @endif
