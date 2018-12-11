@@ -4,6 +4,7 @@ namespace DogeDev\LaravelAPIDocumenter;
 
 use Illuminate\Routing\Route;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Route as RouteFacade;
 
 class RouteParser
@@ -52,61 +53,136 @@ class RouteParser
      */
     public function getObject()
     {
-        return $this->getClassReplacement()
+        $parse = (object)[
+            'uri'        => $this->route->uri,
+            'name'       => @$this->route->action['as'],
+            'methods'    => collect($this->route->methods),
+            'middleware' => (object)[
+                'names'   => collect($this->route->action['middleware']),
+                'classes' => collect(RouteFacade::gatherRouteMiddleware($this->route)),
+            ],
+            'controller' => $this->controllerReflection ? (object)[
+                'name'    => $this->controllerReflection->name,
+                'comment' => $this->getCommentFromString($this->controllerReflection->getDocComment()),
+            ] : null,
+            'function'   => $this->functionReflection ? (object)[
+                'name'    => $this->functionReflection->name,
+                'comment' => $this->getCommentFromString($this->functionReflection->getDocComment()),
+                'request' => $this->requestReflection ? (object)[
+                    'class'      => $this->requestReflection->name,
+                    'parameters' => $this->getRules(),
+                ] : null,
+                'return'  => $this->getReturnParameter(),
+            ] : null,
+            'errors'     => collect($this->errors),
+            'warnings'   => collect($this->warnings),
+        ];
 
-            ?: (object)[
-                'uri'        => $this->route->uri,
-                'name'       => @$this->route->action['as'],
-                'methods'    => collect($this->route->methods),
-                'middleware' => (object)[
-                    'names'   => collect($this->route->action['middleware']),
-                    'classes' => collect(RouteFacade::gatherRouteMiddleware($this->route)),
-                ],
-                'controller' => $this->controllerReflection ? (object)[
-                    'name'    => $this->controllerReflection->name,
-                    'comment' => $this->getCommentFromString($this->controllerReflection->getDocComment()),
-                ] : null,
-                'function'   => $this->functionReflection ? (object)[
-                    'name'    => $this->functionReflection->name,
-                    'comment' => $this->getCommentFromString($this->functionReflection->getDocComment()),
-                    'request' => $this->requestReflection ? (object)[
-                        'class'      => $this->requestReflection->name,
-                        'parameters' => $this->getRules(),
-                    ] : null,
-                    'return'  => $this->getReturnParameter(),
-                ] : null,
-                'errors'     => collect($this->errors),
-                'warnings'   => collect($this->warnings),
-            ];
+        return $this->getClassReplacement($parse);
     }
 
     /**
      * Gets the example from the examples translation file
      *
+     * @param StdClass $object
      * @param bool $array
+     *
      * @return array|null|string
      */
-    private function getClassReplacement()
+    private function getClassReplacement($parse)
     {
         if (!$this->controllerReflection || !$this->functionReflection) {
 
-            return false;
+            return $parse;
         }
 
         $name = $this->controllerReflection->name . "@" . $this->functionReflection->name;
 
-        if (!\Lang::has("laravel-api-documenter::examples." . $name)) {
+        if (!\Lang::has("laravel-api-documenter::class-replacements." . $name)) {
 
-            return false;
+            return $parse;
         }
 
-        return json_decode(json_encode(__("laravel-api-documenter::examples." . $name)));
+        $replace = $this->arrayToObject(__("laravel-api-documenter::class-replacements." . $name));
+
+        return $this->objectReplace($parse, $replace);
+    }
+
+    private function arrayToObject($array)
+    {
+        if (array_values($array) === $array) {
+
+            $collection = [];
+
+            foreach ($array as $value) {
+
+                if (is_array($value)) {
+
+                    $collection[] = $this->arrayToObject($value);
+
+                } else {
+
+                    $collection[] = $value;
+                }
+            }
+
+            return collect($collection);
+        }
+
+        $object = new \StdClass;
+
+        foreach ($array as $key => $value) {
+
+            if (is_array($value)) {
+
+                $object->{$key} = $this->arrayToObject($value);
+
+            } else {
+
+                $object->{$key} = $value;
+            }
+        }
+
+        return $object;
+    }
+
+    /**
+     * Replaces the original object wih values from the second one
+     *
+     * @param $original
+     * @param $replace
+     *
+     * @return mixed
+     */
+    private function objectReplace($original, $replace)
+    {
+        foreach ($replace as $key => $value) {
+
+            if (is_object($value) && get_class($value) !== Collection::class) {
+
+                if (empty($original->{$key})) {
+
+                    $original->{$key} = $replace->{$key};
+
+                } else {
+
+                    $this->objectReplace($original->{$key}, $replace->{$key});
+                }
+
+            } else {
+
+                $original->{$key} = $replace->{$key};
+            }
+        }
+
+        return $original;
     }
 
     /**
      * Gets the Controller ReflectionClass
      *
      * @param string $class
+     *
      * @return null|\ReflectionClass
      */
     private function getControllerReflection($class)
@@ -134,6 +210,7 @@ class RouteParser
      * Gets the function ReflectionMethod
      *
      * @param string $function
+     *
      * @return null|\ReflectionMethod
      */
     private function getFunctionReflection($function)
@@ -185,6 +262,7 @@ class RouteParser
      * Analyzes the comment
      *
      * @param string $string
+     *
      * @return object
      */
     private function getCommentFromString($string)
@@ -232,6 +310,7 @@ class RouteParser
      * Gets rules from a custom request
      *
      * @param \ReflectionMethod $method
+     *
      * @return array
      */
     private function getRules()
@@ -261,6 +340,7 @@ class RouteParser
      * Parses rules
      *
      * @param array $rules
+     *
      * @return array $result
      */
     private function parseRules(array $rules)
@@ -291,7 +371,7 @@ class RouteParser
                     'text'        => $rule,
                     'name'        => $name,
                     'args'        => $args,
-                    'description' => $this->getRuleDescription($name, $attribute, $args)
+                    'description' => $this->getRuleDescription($name, $attribute, $args),
                 ];
             }
 
@@ -307,9 +387,10 @@ class RouteParser
     /**
      * Gets the rule text from language validation
      *
-     * @param $name
-     * @param $attribute
+     * @param       $name
+     * @param       $attribute
      * @param array $args
+     *
      * @return array|null|string
      */
     private function getRuleDescription($name, $attribute, $args = [])
@@ -400,7 +481,8 @@ class RouteParser
                         $example = $this->getExample(substr($class, 0, -2), true);
 
                     } elseif (!in_array($class,
-                        ['mixed', 'array', 'string', 'float', 'int', 'boolean', 'bool', 'null', 'void'])) {
+                        ['mixed', 'array', 'string', 'float', 'int', 'boolean', 'bool', 'null', 'void'])
+                    ) {
 
                         $object  = $this->mockClass($class);
                         $example = $this->getExample($class);
@@ -454,7 +536,8 @@ class RouteParser
      * Gets the example from the examples translation file
      *
      * @param string $class
-     * @param bool $array
+     * @param bool   $array
+     *
      * @return array|null|string
      */
     private function getExample($class, $array = false)
