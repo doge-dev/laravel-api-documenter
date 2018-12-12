@@ -25,6 +25,30 @@ Enjoy!
 
 Contributions to this repo are welcome and will be fully credited. For more info please check [contributing.md](contributing.md) to see a to do list.
 
+
+## Table of Contents
+
+- [Installation](#installation)
+- [Configuration](#configuration)
+- [Usage](#usage)
+  - [Using a Route](#using-a-route)
+  - [Using Artisan](#using-artisan)
+  - [Using Proper LAD](#using-proper-lad)
+  - [Filtering out routes](#filtering-out-routes)
+  - [Grouping routes](#grouping-routes)
+- [Customization](#customization)
+  - [Creating custom validation descriptions](#creating-custom-validation-descriptions)
+  - [Creating hardcoded response examples](#creating-hardcoded-response-examples)
+  - [Replacing parsed data](#replacing-parsed-data)
+  - [Choosing a custom view template](#choosing-a-custom-view-template)
+- [Route object](#route-object)
+- [Change log](#change-log)
+- [Testing](#testing)
+- [Contributing](#contributing)
+- [Security](#security)
+- [Credits](#credits)
+- [License](#license)
+
 ## Installation
 
 To install via Composer run:
