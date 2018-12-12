@@ -230,6 +230,7 @@
                             @endif
 
                             @if($route->function->return)
+
                                 <section>
                                     <h3>Returns</h3>
                                     @foreach ($route->function->return as $return)

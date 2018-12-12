@@ -57,10 +57,7 @@ class RouteParser
             'uri'        => $this->route->uri,
             'name'       => @$this->route->action['as'],
             'methods'    => collect($this->route->methods),
-            'middleware' => (object)[
-                'names'   => collect($this->route->action['middleware']),
-                'classes' => collect(RouteFacade::gatherRouteMiddleware($this->route)),
-            ],
+            'middleware' => $this->loadMiddleware(),
             'controller' => $this->controllerReflection ? (object)[
                 'name'    => $this->controllerReflection->name,
                 'comment' => $this->getCommentFromString($this->controllerReflection->getDocComment()),
@@ -79,6 +76,30 @@ class RouteParser
         ];
 
         return $this->getClassReplacement($parse);
+    }
+
+    private function loadMiddleware()
+    {
+        $middleware = [];
+
+        $names   = collect($this->route->action['middleware'])
+            ->merge(collect(RouteFacade::gatherRouteMiddleware($this->route)));
+
+        foreach ($names as $name) {
+
+            if (!\Lang::has("laravel-api-documenter::middleware." . $name)) {
+
+                $this->warn("Middleware `$name` not found in middleware file");
+
+                continue;
+            }
+
+            $item = __("laravel-api-documenter::middleware." . $name);
+
+            $middleware[$item['name']] = $item['description'];
+        }
+
+        return (object) $middleware;
     }
 
     /**
@@ -536,7 +557,7 @@ class RouteParser
      * Gets the example from the examples translation file
      *
      * @param string $class
-     * @param bool   $array
+     * @param bool $array
      *
      * @return array|null|string
      */

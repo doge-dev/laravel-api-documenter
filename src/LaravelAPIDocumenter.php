@@ -94,7 +94,7 @@ class LaravelAPIDocumenter
     }
 
     /**
-     * Gets a collection documented routes
+     * Gets a collection of documented routes
      *
      * @return Collection
      */
