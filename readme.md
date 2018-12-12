@@ -83,7 +83,7 @@ There are a couple of ways that you can generate the documentation from your cod
 
 The Proper LAD is highly customizable and adjustable to your preferred documenting paradigm. These features will be discussed in the [Customization](#customization) section. 
 
-#### Using a Route
+### Using a Route
 
 The easiest way of generating the documentation is by simply adding a route and rendering the blade template:
 
@@ -96,7 +96,7 @@ Route::get('api-documentation', function () {
 });
 ```
 
-#### Using Artisan
+### Using Artisan
 
 You can generate an HTML file to a route of your choice through an `artisan` command:
 
@@ -106,7 +106,7 @@ php artisan doge-dev:generate-documentation
 
 **NOTE:** If you run the command with `--help` you will get a list of all options for running the console command.
 
-#### Using Proper LAD
+### Using Proper LAD
 
 There are a couple of functions that Proper LAD `DogeDev\LaravelAPIDocumenter\LaravelAPIDocumenter` uses for this, which you can utilize:
 
@@ -117,7 +117,7 @@ getHTML();              // Gets the string contents of the View
 saveHTMLToFile($path);  // Saves the API documentation to a file
 ``` 
 
-#### Filtering out routes 
+### Filtering out routes 
 
 You can choose to document only certain routes.
 
@@ -137,7 +137,7 @@ $documenter->setPrefix(['oauth', 'api/1.0'])->getRoutes()
 
 ```
 
-#### Grouping routes
+### Grouping routes
 
 Proper LAD uses [Collections](https://laravel.com/docs/5.7/collections), so sorting grouping and transforming the routes should be fairly straightforward. 
 
@@ -170,7 +170,7 @@ $routes = $documenter->getRoutes()->groupBy('controller.name');
 
 ## Customization
 
-#### Creating custom validation descriptions
+### Creating custom validation descriptions
 
 All of the validation rules are stored in the LAD's `descriptions` translation file.
 
@@ -186,7 +186,7 @@ The `:attribute` parameter will be replaced with the name of the attribute being
 
 If there are more `:whatever` tokens in the string, they will be replaced with the validation parameters.
 
-#### Creating hardcoded response examples
+### Creating hardcoded response examples
 
 By default, Proper LAD parses the **@response** tag of the Controllers function and tries mocking the response object using [Laravel's Model Factories](https://laravel.com/docs/5.7/seeding#using-model-factories).
 
@@ -205,7 +205,7 @@ However, you can also choose to write the response as plain text. This can be ac
 
 So, whenever a `\App\Some\Class` class is found in the response, the listed example will be used.
 
-#### Replacing parsed data
+### Replacing parsed data
 
 Quite often you might need to replace the whole Route object with custom data - like when documenting Passports authentication endpoints. This can be easily achieved by placing an item in the `class-replacements.php` translation file (located in the resources -> vendor folder).
 
@@ -228,7 +228,7 @@ The Proper LAD will parse the route and overwrite it with data found in the `cla
 
 By adding this line you would effectively replace the example attribute for this controller's parsed data, the rest of the data will stay untouched.
 
-#### Choosing a custom view template
+### Choosing a custom view template
 
 By default, Prope LAD uses the default blade template shipped with LAD.
 
