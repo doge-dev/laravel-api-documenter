@@ -121,7 +121,7 @@ class LaravelAPIDocumenter
      */
     public function getView()
     {
-        $routes = $this->getRoutes();
+        $routes = $this->getRoutes()->where('function', '!=', null);
 
         return view($this->getViewTemplate(), ['routes' => $routes]);
     }
